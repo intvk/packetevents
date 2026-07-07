@@ -248,11 +248,8 @@ public class AdventureNBTSerializer implements ComponentSerializer<Component, Co
             TranslatableComponent.Builder i18nBuilder;
             builder = i18nBuilder = Component.translatable().key(translate);
             if (translateWith != null) {
-                if (BackwardCompatUtil.IS_4_15_0_OR_NEWER) {
-                    i18nBuilder.arguments(translateWith);
-                } else {
-                    i18nBuilder.args(translateWith);
-                }
+                // Silnestium fork: pre-4.15 args() fallback dropped, it no longer compiles on Adventure 5
+                i18nBuilder.arguments(translateWith);
             }
             if (BackwardCompatUtil.IS_4_13_0_OR_NEWER) {
                 i18nBuilder.fallback(translateFallback);
@@ -350,16 +347,10 @@ public class AdventureNBTSerializer implements ComponentSerializer<Component, Co
             }
 
             // translation arguments
-            if (BackwardCompatUtil.IS_4_15_0_OR_NEWER) {
-                List<TranslationArgument> args = ((TranslatableComponent) component).arguments();
-                if (!args.isEmpty()) {
-                    writer.writeList("with", NBTType.COMPOUND, this.serializeTranslationArgumentList(args, wrapper));
-                }
-            } else {
-                List<Component> args = ((TranslatableComponent) component).args();
-                if (!args.isEmpty()) {
-                    writer.writeList("with", NBTType.COMPOUND, this.serializeComponentList(args, wrapper));
-                }
+            // Silnestium fork: pre-4.15 args() fallback dropped, it no longer compiles on Adventure 5
+            List<TranslationArgument> args = ((TranslatableComponent) component).arguments();
+            if (!args.isEmpty()) {
+                writer.writeList("with", NBTType.COMPOUND, this.serializeTranslationArgumentList(args, wrapper));
             }
         } else if (component instanceof ScoreComponent) {
             // nested compound
@@ -382,19 +373,19 @@ public class AdventureNBTSerializer implements ComponentSerializer<Component, Co
         } else if (component instanceof KeybindComponent) {
             // keybind
             writer.writeUTF("keybind", ((KeybindComponent) component).keybind());
-        } else if (component instanceof NBTComponent<?, ?>) {
+        } else if (component instanceof NBTComponent<?>) {
             // nbt path
-            String nbtPath = ((NBTComponent<?, ?>) component).nbtPath();
+            String nbtPath = ((NBTComponent<?>) component).nbtPath();
             writer.writeUTF("nbt", nbtPath);
 
             // interpret
-            boolean interpret = ((NBTComponent<?, ?>) component).interpret();
+            boolean interpret = ((NBTComponent<?>) component).interpret();
             if (interpret) {
                 writer.writeBoolean("interpret", true);
             }
 
             // separator
-            Component separator = ((NBTComponent<?, ?>) component).separator();
+            Component separator = ((NBTComponent<?>) component).separator();
             if (separator != null) writer.write("separator", this.serialize(separator, wrapper));
 
             if (component instanceof BlockNBTComponent) {

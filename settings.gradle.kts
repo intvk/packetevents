@@ -28,24 +28,11 @@ plugins {
 rootProject.name = "packetevents"
 include("api")
 include("netty-common")
-// Platform modules
-include("spigot")
-include("bungeecord")
-include("velocity")
-include("sponge")
-include("fabric")
-include("fabric-common")
-include("fabric-intermediary")
-include(":fabric-intermediary:mc1140")
-include(":fabric-intermediary:mc1194")
-include(":fabric-intermediary:mc1202")
-include(":fabric-intermediary:mc1211")
-include(":fabric-intermediary:mc1216")
-include("fabric-official")
-include(":fabric-official:mc261")
-// Patch modules
-include(":patch:adventure-text-serializer-gson")
-include(":patch:adventure-text-serializer-legacy")
+// Platform modules (spigot/bungeecord/velocity/sponge/fabric*) are dropped in the Silnestium
+// slim consumption: only api + netty-common are needed as a composite build, and the fabric
+// modules drag in fabric-loom which is expensive and irrelevant to a headless bridge.
+// The :patch:adventure-text-serializer-* modules (Adventure-4 internals forks) are dropped
+// too — under Adventure 5 the api shadowJar bundles the stock 5.x serializers instead.
 
 // Workspace composite override (grim.sh writes this file on clone/pull to rename
 // rootProject when the workspace pulls multiple sibling repos with the same name).

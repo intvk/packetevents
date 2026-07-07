@@ -1,7 +1,6 @@
 import com.github.retrooper.compression.strategy.dir.JsonBase64DataDirStrategy
 import com.github.retrooper.compression.strategy.dir.JsonRegistryCompressionDirStrategy
 import com.github.retrooper.compression.strategy.dir.JsonToNbtDirStrategy
-import com.github.retrooper.excludeAdventure
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
@@ -24,22 +23,25 @@ dependencies {
     compileOnlyApi(libs.bundles.adventure)
     compileOnlyApi(libs.bundles.adventure.serializers)
     implementation(libs.adventure.api)
-    api(project(":patch:adventure-text-serializer-gson", "shadow")) {
-        excludeAdventure()
-    }
-    api(project(":patch:adventure-text-serializer-legacy", "shadow")) {
-        excludeAdventure()
-    }
+    // Silnestium slim build: the vendored :patch:adventure-text-serializer-* sources are
+    // Adventure-4 internals forks and do not compile against Adventure 5. The stock 5.x
+    // serializer artifacts are bundled into the shadowJar instead (compileShadowOnly =
+    // compileOnly + shadowed), where the existing relocation rewrites them to the same
+    // io.github.retrooper.packetevents.adventure.serializer.* packages consumers import.
+    "compileShadowOnly"(libs.adventure.text.serializer.gson)
+    "compileShadowOnly"(libs.adventure.text.serializer.legacy)
     compileOnly(libs.gson)
     compileOnly(libs.adventure.text.logger.slf4j)
+    // Adventure 5's text-logger-slf4j no longer leaks slf4j-api onto consumers' compile
+    // classpaths; Slf4jLogManager needs it declared explicitly.
+    compileOnly(libs.slf4j.api)
     compileOnly(libs.log4j.api)
     compileOnly(libs.checkerqual)
 
     testRuntimeOnly(testlibs.bundles.adventure)
     testRuntimeOnly(testlibs.bundles.adventure.serializers)
     testImplementation(libs.bundles.adventure)
-    testImplementation(project(":patch:adventure-text-serializer-gson"))
-    testImplementation(project(":patch:adventure-text-serializer-legacy"))
+    testImplementation(libs.adventure.text.serializer.gson)
     testImplementation(libs.adventure.text.serializer.legacy)
     testImplementation(libs.adventure.text.logger.slf4j)
     testImplementation(project(":netty-common"))
@@ -49,7 +51,7 @@ dependencies {
     testImplementation(testlibs.bundles.junit)
     testImplementation(libs.netty)
     testImplementation(libs.classgraph)
-    testImplementation(project(":spigot"))
+    // (:spigot test dependency dropped — the spigot module is excluded from the Silnestium slim build)
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.11.2")
 }
@@ -120,5 +122,28 @@ publishing {
         named<MavenPublication>("shadow") {
             artifact(tasks["javadocJar"])
         }
+    }
+}
+
+// When packetevents is consumed as an included (composite) build — gradle.parent != null, e.g. the
+// Silnestium `includeBuild("packetevents")` — expose the relocated shadowJar as the api/runtime
+// artifact instead of the plain jar. The published Maven `packetevents-api` jar IS the shadowJar
+// (relocated `net.kyori.adventure.text.serializer`/`option` -> `io.github.retrooper.packetevents.*`
+// plus the bundled `assets/mappings` resources), and downstream consumers (grim:common,
+// anticheat-grim) compile against those relocated packages. Without this redirect, dependency
+// substitution hands out the un-relocated plain jar and grim's relocated-package imports fail to
+// resolve. Standalone builds (gradle.parent == null) are unaffected.
+if (gradle.parent != null) {
+    configurations.apiElements.get().outgoing.apply {
+        artifacts.clear()
+        // Secondary variants (classes/resources dirs) would still win for project-to-project
+        // compilation and bypass the shadowJar, hiding the relocated packages — drop them.
+        variants.clear()
+        artifact(tasks.shadowJar)
+    }
+    configurations.runtimeElements.get().outgoing.apply {
+        artifacts.clear()
+        variants.clear()
+        artifact(tasks.shadowJar)
     }
 }

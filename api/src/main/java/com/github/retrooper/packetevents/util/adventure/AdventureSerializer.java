@@ -264,7 +264,9 @@ public final class AdventureSerializer implements NbtEncoder<Component>, NbtDeco
                         }
                     })
                     .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
-                    .showAchievementToComponent(input -> Statistics.getById(input).display())
+                    // Silnestium fork: showAchievementToComponent was an extension of the vendored
+                    // :patch: gson serializer (<=1.11 show_achievement hovers); the stock Adventure 5
+                    // serializer bundled instead has no such hook, and pinned-26.1 never emits it.
                     .build();
         }
         return this.gson;
