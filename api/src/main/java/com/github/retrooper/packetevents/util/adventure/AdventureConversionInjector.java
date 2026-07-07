@@ -22,7 +22,6 @@ import com.github.retrooper.packetevents.protocol.nbt.codec.NBTCodec;
 import com.github.retrooper.packetevents.util.reflection.Reflection;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.event.DataComponentValueConverterRegistry;
-import net.kyori.adventure.text.serializer.gson.BackwardCompatUtil;
 import net.kyori.adventure.text.serializer.gson.GsonDataComponentValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NullMarked;

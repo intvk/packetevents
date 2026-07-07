@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.kyori.adventure.text.serializer.gson;
+package com.github.retrooper.packetevents.util.adventure;
 
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.nbt.api.BinaryTagHolder;
@@ -33,7 +33,9 @@ import java.util.UUID;
 // probed the runtime Adventure version with try/catch feature checks so packetevents could run on any
 // Adventure 4.x. The slim build pins Adventure 5, so the probes collapse to constants and the pre-4.x
 // fallback branches (which no longer compile against 5) are gone. Public surface kept exactly as the
-// api sources consume it; lives in the same package so the shadow relocation yields the same FQCN.
+// api sources consume it. It lives in packetevents' own util.adventure package: shadow drops
+// project-local classes under net/kyori/** from the jar, so the original patch-module package is
+// not reusable for source kept in :api.
 public final class BackwardCompatUtil {
 
     public static final boolean IS_4_10_0_OR_NEWER = true;
