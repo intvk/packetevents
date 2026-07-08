@@ -6,11 +6,16 @@ plugins {
 ext["snapshot"] = ext["snapshot"].toString().toBooleanStrict()
 ext["includeBranchName"] = ext["includeBranchName"].toString().toBooleanStrict()
 ext["mainBranchName"] = ext["mainBranchName"].toString()
+// Silnestium fork: ignore the exit value — getOrElse only covers a missing value, not a git
+// invocation that ran and failed (e.g. building from a docker context with no .git directory).
+// The placeholder must stay hex: PEVersionTask's regex only accepts [0-9a-f]+ commit hashes.
 ext["commitHash"] = providers.exec {
     commandLine("git", "rev-parse", "--short", "HEAD")
-}.standardOutput.asText.map { it.trim() }.getOrElse("unknown")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim().ifEmpty { "0000000" } }.getOrElse("0000000")
 ext["gitBranch"] = providers.exec {
     commandLine("git", "rev-parse", "--abbrev-ref", "HEAD")
+    isIgnoreExitValue = true
 }.standardOutput.asText.map {
     it.trim()
         .replace(Regex("[^a-zA-Z0-9_.-]+"), "_") // Other invalid chars become underscores
