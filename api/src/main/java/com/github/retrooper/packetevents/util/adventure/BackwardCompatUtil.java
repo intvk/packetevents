@@ -33,9 +33,10 @@ import java.util.UUID;
 // probed the runtime Adventure version with try/catch feature checks so packetevents could run on any
 // Adventure 4.x. The slim build pins Adventure 5, so the probes collapse to constants and the pre-4.x
 // fallback branches (which no longer compile against 5) are gone. Public surface kept exactly as the
-// api sources consume it. It lives in packetevents' own util.adventure package: shadow drops
-// project-local classes under net/kyori/** from the jar, so the original patch-module package is
-// not reusable for source kept in :api.
+// api sources consume it. It lives in packetevents' own util.adventure package — the original
+// net.kyori serializer package belonged to the patch module, and borrowing a foreign namespace for
+// first-party source buys nothing (it also used to trip the shadowJar's kyori path filter before
+// that filter became keep-prefix-aware).
 public final class BackwardCompatUtil {
 
     public static final boolean IS_4_10_0_OR_NEWER = true;

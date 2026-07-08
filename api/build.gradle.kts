@@ -108,11 +108,19 @@ tasks {
     }
 
     shadowJar {
+        // Silnestium fork: keep-prefix-aware exclusion. The original predicate also excluded the
+        // net/kyori and net/kyori/adventure[/text] DIRECTORIES, and a local file-tree walk prunes an
+        // excluded directory's whole subtree before children are tested — so project-local classes
+        // under the kept net/kyori/adventure/text/serializer prefix silently vanished from the jar
+        // (upstream never sees it: it has no project-local net/kyori sources). Directories that are
+        // ancestors of a kept prefix must stay includable; everything else keeps upstream behavior,
+        // including the subtree pruning that drops the adventure transitives bundled via
+        // compileShadowOnly.
         exclude {
             val path = it.path
-            path.startsWith("net/kyori") && !path.startsWith("net/kyori/adventure/text/serializer") && !path.startsWith(
-                "net/kyori/option"
-            )
+            val kept = listOf("net/kyori/adventure/text/serializer", "net/kyori/option")
+            path.startsWith("net/kyori") &&
+                kept.none { keep -> path.startsWith(keep) || keep == path || keep.startsWith("$path/") }
         }
     }
 }
